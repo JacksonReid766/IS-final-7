@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            font-size: 18px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+        header a {
+            color: white;
+            text-decoration: none;
+            margin-right: 15px;
+        }
+        header a:hover {
+            text-decoration: underline;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #02c594;
+            flex-direction: column;
+        }
+        canvas {
+            border: 2px solid black;
+            background-color: #222;
+        }
+        .game-info {
+            font-size: 20px;
+            color: #fff;
+            margin-top: 20px;
+        }
+        .game-over {
+            font-size: 30px;
+            color: red;
+            margin-top: 20px;
+            display: none;
+        }
+        #startButton {
+            padding: 10px 20px;
+            background-color: #333;
+            color: white;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        #startButton:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="scratch.html">Home</a> |
+        <a href="video.html">Video/Tableau</a> |
+        <a href="#">Snake Game</a>
+    </header>
+
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <div class="game-info">
+        <p>Use Arrow Keys to play</p>
+        <p>Score: <span id="score">0</span></p>
+    </div>
+    <div class="game-over" id="gameOverMessage">
+        <p>Game Over!</p>
+        <p>Click Start to Restart</p>
+    </div>
+    <button id="startButton">Start Game</button>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const grid = 20;
+        let count = 0;
+        let score = 0;
+        let snake;
+        let direction;
+        let food;
+        let gameRunning = false;
+        let gameInterval;
+
+        function initGame() {
+            snake = [{ x: 160, y: 160 }];
+            direction = 'RIGHT';
+            food = randomFood();
+            score = 0;
+            gameRunning = true;
+            document.getElementById('score').textContent = score;
+            document.getElementById('gameOverMessage').style.display = 'none';
+        }
+
+        function startGame() {
+            initGame();
+            clearInterval(gameInterval); // Clear existing game loop
+            gameInterval = setInterval(gameLoop, 1000 / 8); // 8 FPS (slower for an authentic feel)
+            document.getElementById('startButton').style.display = 'none';
+        }
+
+        function randomFood() {
+            return {
+                x: Math.floor(Math.random() * 20) * grid,
+                y: Math.floor(Math.random() * 20) * grid
+            };
+        }
+
+        function gameLoop() {
+            if (!gameRunning) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            moveSnake();
+            if (isGameOver()) {
+                endGame();
+                return;
+            }
+            drawFood();
+            drawSnake();
+            checkFoodCollision();
+            updateScore();
+        }
+
+        function moveSnake() {
+            let head = { ...snake[0] };
+
+            if (direction === 'UP') head.y -= grid;
+            if (direction === 'DOWN') head.y += grid;
+            if (direction === 'LEFT') head.x -= grid;
+            if (direction === 'RIGHT') head.x += grid;
+
+            snake.unshift(head);
+            snake.pop();
+        }
+
+        function drawFood() {
+            ctx.fillStyle = 'red';
+            ctx.fillRect(food.x, food.y, grid, grid);
+        }
+
+        function drawSnake() {
+            ctx.fillStyle = 'green';
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillRect(snake[i].x, snake[i].y, grid, grid);
+            }
+        }
+
+        function checkFoodCollision() {
+            const head = snake[0];
+            if (head.x === food.x && head.y === food.y) {
+                food = randomFood();
+                snake.push({}); // Add a new segment to the snake
+                score++;
+            }
+        }
+
+        function isGameOver() {
+            const head = snake[0];
+            return head.x < 0 || head.y < 0 || head.x >= canvas.width || head.y >= canvas.height ||
+                snake.slice(1).some(segment => segment.x === head.x && segment.y === head.y);
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+        }
+
+        function endGame() {
+            gameRunning = false;
+            clearInterval(gameInterval);
+            document.getElementById('gameOverMessage').style.display = 'block';
+            document.getElementById('startButton').style.display = 'block';
+        }
+
+        function changeDirection(event) {
+            if (!gameRunning) return;
+
+            if (event.keyCode === 37 || event.keyCode === 38 || event.keyCode === 39 || event.keyCode === 40) {
+                event.preventDefault();
+            }
+
+            if (event.keyCode === 37 && direction !== 'RIGHT') direction = 'LEFT';
+            if (event.keyCode === 38 && direction !== 'DOWN') direction = 'UP';
+            if (event.keyCode === 39 && direction !== 'LEFT') direction = 'RIGHT';
+            if (event.keyCode === 40 && direction !== 'UP') direction = 'DOWN';
+        }
+
+        document.addEventListener('keydown', changeDirection);
+        document.getElementById('startButton').addEventListener('click', startGame);
+    </script>
+
+</body>
+</html>
